@@ -175,6 +175,9 @@ function flowsell_enqueue_frontend(): void {
 		[ 'in_footer' => true, 'strategy'  => 'defer' ]
 	);
 
+	$lead_fields_str = $settings['lead_fields'] ?? '';
+	$lead_fields     = array_filter( array_map( 'trim', explode( ',', $lead_fields_str ) ) );
+
 	wp_localize_script( 'flowsell-chat', 'flowsellConfig', [
 		'apiBase'      => esc_url_raw( rest_url( 'flowsell/v1' ) ),
 		'nonce'        => wp_create_nonce( 'wp_rest' ),
@@ -182,6 +185,8 @@ function flowsell_enqueue_frontend(): void {
 		'primaryColor' => sanitize_hex_color( $settings['primary_color'] ?? '#25d366' ),
 		'widgetLabel'  => esc_js( $settings['widget_label'] ?? 'Find Your Perfect Product' ),
 		'position'     => sanitize_text_field( $settings['position'] ?? 'bottom-right' ),
+		'whatsapp'     => sanitize_text_field( $settings['whatsapp'] ?? '' ),
+		'leadFields'   => array_values( $lead_fields ),
 	] );
 }
 

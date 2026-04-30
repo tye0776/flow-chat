@@ -144,10 +144,11 @@ class FlowSell_Admin {
 		$pages   = (int) ceil( $total / 20 );
 
 		$outcome_labels = [
-			'in_progress' => __( 'In Progress', 'flowsell-ai' ),
-			'purchase'    => __( 'Purchase ✅', 'flowsell-ai' ),
-			'drop_off'    => __( 'Drop-off ❌', 'flowsell-ai' ),
-			'recommended' => __( 'Recommended 💡', 'flowsell-ai' ),
+			'in_progress'   => __( 'In Progress', 'flowsell-ai' ),
+			'purchase'      => __( 'Purchase ✅', 'flowsell-ai' ),
+			'drop_off'      => __( 'Drop-off ❌', 'flowsell-ai' ),
+			'recommended'   => __( 'Recommended 💡', 'flowsell-ai' ),
+			'lead_captured' => __( 'Lead Captured 📞', 'flowsell-ai' ),
 		];
 		?>
 		<div class="wrap flowsell-admin-wrap">
@@ -313,6 +314,20 @@ class FlowSell_Admin {
 							</select>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="fs_whatsapp"><?php esc_html_e( 'WhatsApp Number', 'flowsell-ai' ); ?></label></th>
+						<td>
+							<input type="text" id="fs_whatsapp" name="flowsell_whatsapp" class="regular-text" value="<?php echo esc_attr( $settings['whatsapp'] ?? '' ); ?>" placeholder="+2348000000000">
+							<p class="description"><?php esc_html_e( 'Number for Live Agent fallback (include country code, no spaces or +).', 'flowsell-ai' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="fs_lead_fields"><?php esc_html_e( 'Lead Capture Fields', 'flowsell-ai' ); ?></label></th>
+						<td>
+							<input type="text" id="fs_lead_fields" name="flowsell_lead_fields" class="regular-text" value="<?php echo esc_attr( $settings['lead_fields'] ?? '' ); ?>" placeholder="Name, Email, Phone">
+							<p class="description"><?php esc_html_e( 'Comma-separated list of info to ask if user does not buy.', 'flowsell-ai' ); ?></p>
+						</td>
+					</tr>
 				</table>
 
 				<?php submit_button( __( 'Save Settings', 'flowsell-ai' ) ); ?>
@@ -379,6 +394,8 @@ class FlowSell_Admin {
 			'position'      => in_array( $_POST['flowsell_position'] ?? '', [ 'bottom-right', 'bottom-left' ], true )
 				? $_POST['flowsell_position']
 				: 'bottom-right',
+			'whatsapp'      => sanitize_text_field( $_POST['flowsell_whatsapp'] ?? '' ),
+			'lead_fields'   => sanitize_text_field( $_POST['flowsell_lead_fields'] ?? '' ),
 		];
 
 		update_option( 'flowsell_settings', $settings );

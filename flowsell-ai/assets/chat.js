@@ -21,14 +21,20 @@
 
   /* ── State ───────────────────────────────────────────────── */
   let state = {
-    flow:        null,
-    stepIndex:   0,
-    stepHistory: [],   // ordered list of visited step IDs
-    userAnswers: {},   // { step_id: chosen_answer }
-    sessionId:   null,
-    open:        false,
-    finished:    false,
+    flow:                null,
+    stepIndex:           0,
+    stepHistory:         [],   // ordered list of visited step IDs
+    userAnswers:         {},   // { step_id: chosen_answer }
+    sessionId:           null,
+    open:                false,
+    finished:            false,
+    purchased:           false,
+    leadFieldsToAsk:     [],
+    leadFieldsCollected: {},
+    currentLeadField:    null,
   };
+
+  let idleTimer = null;
 
   /* ── DOM Refs ─────────────────────────────────────────────── */
   const $widget    = $('#flowsell-widget');
@@ -208,7 +214,9 @@
     state.stepHistory = [];
     state.userAnswers = {};
     state.finished    = false;
+    state.purchased   = false;
     state.sessionId   = generateSessionId();
+    if (idleTimer) clearTimeout(idleTimer);
 
     $messages.empty();
     $options.empty();
@@ -245,8 +253,12 @@
       renderOptions(validOptions);
       enableOptions();
     } else {
-      await botMessage("It looks like we don't have any products matching that exact combination right now. Let's start over!", 500);
-      renderRestartButton();
+      await botMessage("It looks like we don't have any products matching that exact combination right now.", 500);
+      if (CFG.leadFields && CFG.leadFields.length > 0) {
+        startLeadCapture("To help our team find what you're looking for, please leave your details.");
+      } else {
+        renderFallbackButtons();
+      }
     }
   }
 
@@ -303,15 +315,29 @@
 
       if (resp.success && resp.products && resp.products.length > 0) {
         renderProductCards(resp.products);
+        if (CFG.leadFields && CFG.leadFields.length > 0) {
+          idleTimer = setTimeout(() => {
+            if (!state.purchased && state.open) {
+              startLeadCapture("Didn't find exactly what you need? Leave your details and we'll help!");
+            }
+          }, 15000);
+        }
       } else {
         $('<div class="flowsell-no-products">').text(
           "Hmm, no products matched your preferences right now. Try browsing our store!"
         ).insertBefore($products);
         await botMessage("I couldn't find exact matches, but you can browse our full collection!", 400);
+        
+        if (CFG.leadFields && CFG.leadFields.length > 0) {
+          startLeadCapture("To help our team assist you, please leave your details.");
+        } else {
+          renderFallbackButtons();
+        }
       }
     } catch (e) {
       console.warn('[FlowSell] Product fetch failed:', e);
       await botMessage("I had trouble loading products. Please visit our store directly.", 400);
+      renderFallbackButtons();
     }
   }
 
@@ -405,15 +431,85 @@
   function disableOptions() { $options.find('.flowsell-option-btn').prop('disabled', true); }
   function enableOptions()  { $options.find('.flowsell-option-btn').prop('disabled', false); }
 
+  /* ── Fallback & Lead Capture ─────────────────────────────── */
+
   /**
-   * Render the "Start Over" button at the end of the flow.
+   * Render fallback buttons (Restart and WhatsApp)
    */
-  function renderRestartButton() {
+  function renderFallbackButtons() {
     $options.empty();
-    $('<button class="flowsell-restart-btn" type="button">')
+    
+    const $wrap = $('<div style="display:flex; gap:8px; flex-wrap:wrap;">').appendTo($options);
+
+    $('<button class="flowsell-restart-btn" type="button" style="flex:1;">')
       .text('🔄 Start Over')
       .on('click', startFlow)
-      .appendTo($options);
+      .appendTo($wrap);
+
+    if (CFG.whatsapp) {
+      $('<button class="flowsell-whatsapp-btn" type="button" style="flex:1; background:#25d366; color:white; border-color:#25d366;">')
+        .text('💬 Chat with agent')
+        .on('click', redirectToWhatsApp)
+        .appendTo($wrap);
+    }
+  }
+
+  function redirectToWhatsApp() {
+    if (!CFG.whatsapp) return;
+    
+    let summary = "Hi, I'm looking for a product with these preferences:\n";
+    for (const [key, val] of Object.entries(state.userAnswers)) {
+      if (!key.startsWith('_lead_')) {
+        summary += `- ${val}\n`;
+      }
+    }
+    const text = encodeURIComponent(summary.trim());
+    window.open(`https://wa.me/${CFG.whatsapp}?text=${text}`, '_blank');
+  }
+
+  async function startLeadCapture(introText) {
+    if (introText) {
+      await botMessage(introText, 500);
+    }
+    state.leadFieldsToAsk = [...CFG.leadFields];
+    state.leadFieldsCollected = {};
+    askNextLeadField();
+  }
+
+  async function askNextLeadField() {
+    if (state.leadFieldsToAsk.length === 0) {
+      Object.assign(state.userAnswers, state.leadFieldsCollected);
+      logSession('lead_captured');
+      await botMessage("Thanks! We've saved your details.", 400);
+      renderFallbackButtons();
+      return;
+    }
+
+    const field = state.leadFieldsToAsk.shift();
+    state.currentLeadField = field;
+    await botMessage(`Please enter your ${field}:`, 400);
+    renderLeadInput(field);
+  }
+
+  function renderLeadInput(field) {
+    $options.empty();
+    const $form = $('<form class="flowsell-lead-form" style="display:flex; width:100%; gap:8px;">');
+    const $input = $('<input type="text" required class="flowsell-lead-input" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:4px;">')
+      .attr('placeholder', field);
+    const $submit = $('<button type="submit" class="flowsell-option-btn" style="width:auto; margin:0; padding:8px 16px;">')
+      .text('Send');
+    
+    $form.append($input, $submit).on('submit', function(e) {
+      e.preventDefault();
+      const val = $input.val().trim();
+      if (!val) return;
+      $options.empty();
+      userMessage(val);
+      state.leadFieldsCollected[`_lead_${field}`] = val;
+      askNextLeadField();
+    });
+    $options.append($form);
+    $input.focus();
   }
 
   /* ── Session Logging ─────────────────────────────────────── */
@@ -489,6 +585,8 @@
    * Logs a purchase outcome and optionally redirects.
    */
   $products.on('click', '.flowsell-atc-btn', function (e) {
+    state.purchased = true;
+    if (idleTimer) clearTimeout(idleTimer);
     logSession('purchase');
     // Allow the default link navigation (WooCommerce ?add-to-cart=ID pattern)
   });

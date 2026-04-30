@@ -213,7 +213,7 @@ class FlowSell_REST_API {
 				'required'          => false,
 				'type'              => 'string',
 				'sanitize_callback' => 'sanitize_text_field',
-				'enum'              => [ 'in_progress', 'purchase', 'drop_off', 'recommended' ],
+				'enum'              => [ 'in_progress', 'purchase', 'drop_off', 'recommended', 'lead_captured' ],
 			],
 		];
 	}
