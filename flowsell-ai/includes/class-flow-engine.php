@@ -115,6 +115,43 @@ class FlowSell_Flow_Engine {
 	}
 
 	/**
+	 * Given a step ID and current cumulative answers, return only the options
+	 * that result in at least 1 valid WooCommerce product.
+	 *
+	 * @param string $step_id
+	 * @param array  $answers
+	 * @return array Array of valid option labels.
+	 */
+	public function get_valid_options( string $step_id, array $answers ): array {
+		$step = $this->get_step( $step_id );
+		if ( ! $step || empty( $step['options'] ) ) {
+			return [];
+		}
+
+		$valid_options = [];
+		$base_filters  = $this->build_filters_from_answers( $answers );
+		$commerce      = new FlowSell_Commerce_Engine();
+
+		foreach ( $step['options'] as $option ) {
+			$option_filters = $this->extract_product_filters( $step, $option );
+			$combined       = array_merge( $base_filters, $option_filters );
+
+			// If there are no filters at all, it's globally valid
+			if ( empty( $combined ) ) {
+				$valid_options[] = $option;
+				continue;
+			}
+
+			// Otherwise, check product existence
+			if ( $commerce->has_products( $combined ) ) {
+				$valid_options[] = $option;
+			}
+		}
+
+		return $valid_options;
+	}
+
+	/**
 	 * Extract product filter hints from a step's answers.
 	 * Looks for optional 'product_filters' key in step definition.
 	 *

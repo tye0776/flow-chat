@@ -40,6 +40,14 @@ class FlowSell_REST_API {
 			'permission_callback' => [ $this, 'verify_nonce' ],
 			'args'                => $this->get_products_args(),
 		] );
+
+		// POST /flowsell/v1/check-options
+		register_rest_route( self::NS, '/check-options', [
+			'methods'             => WP_REST_Server::CREATABLE,
+			'callback'            => [ $this, 'check_options' ],
+			'permission_callback' => [ $this, 'verify_nonce' ],
+			'args'                => $this->check_options_args(),
+		] );
 	}
 
 	// ─── Endpoint: get-flow ────────────────────────────────────────────────────
@@ -123,6 +131,27 @@ class FlowSell_REST_API {
 			'success'  => true,
 			'products' => $products,
 			'count'    => count( $products ),
+		] );
+	}
+
+	// ─── Endpoint: check-options ───────────────────────────────────────────────
+
+	/**
+	 * Validate options for a specific step based on current answers.
+	 *
+	 * @param WP_REST_Request $request
+	 * @return WP_REST_Response
+	 */
+	public function check_options( WP_REST_Request $request ): WP_REST_Response {
+		$step_id = $request->get_param( 'step_id' );
+		$answers = (array) $request->get_param( 'answers' );
+
+		$engine        = new FlowSell_Flow_Engine();
+		$valid_options = $engine->get_valid_options( $step_id, $answers );
+
+		return rest_ensure_response( [
+			'success'       => true,
+			'valid_options' => $valid_options,
 		] );
 	}
 
@@ -226,6 +255,24 @@ class FlowSell_REST_API {
 			'tag_ids'     => [
 				'required' => false,
 				'type'     => 'array',
+			],
+		];
+	}
+
+	/**
+	 * REST args for /check-options.
+	 */
+	private function check_options_args(): array {
+		return [
+			'step_id' => [
+				'required'          => true,
+				'type'              => 'string',
+				'sanitize_callback' => 'sanitize_text_field',
+			],
+			'answers' => [
+				'required'          => false,
+				'type'              => 'object',
+				'sanitize_callback' => [ $this, 'deep_sanitize_text_field' ],
 			],
 		];
 	}

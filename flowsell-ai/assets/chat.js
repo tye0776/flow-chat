@@ -148,6 +148,32 @@
   }
 
   /**
+   * Validate options for a step based on current answers via REST API.
+   *
+   * @param {string} stepId
+   * @returns {Promise<Array<string>>}
+   */
+  async function checkOptions(stepId) {
+    try {
+      const resp = await $.ajax({
+        url:         API + '/check-options',
+        method:      'POST',
+        contentType: 'application/json',
+        data:        JSON.stringify({ step_id: stepId, answers: state.userAnswers }),
+        headers:     { 'X-WP-Nonce': CFG.nonce },
+      });
+      if (resp.success && resp.valid_options) {
+        return resp.valid_options;
+      }
+    } catch (e) {
+      console.warn('[FlowSell] Option check failed:', e);
+    }
+    // Fallback to all options if API fails
+    const step = getStep(stepId);
+    return step ? step.options : [];
+  }
+
+  /**
    * Return the current step object.
    */
   function currentStep() {
@@ -202,10 +228,26 @@
 
     state.stepHistory.push(step.id);
     disableOptions();
+    clearOptions();
 
     await botMessage(step.question, 700);
-    renderOptions(step.options);
-    enableOptions();
+
+    // Show options typing indicator
+    const $loading = $('<div class="flowsell-typing" style="margin-top:10px;margin-bottom:10px;">')
+      .append('<span></span><span></span><span></span>');
+    $options.append($loading);
+    scrollToBottom();
+
+    const validOptions = await checkOptions(step.id);
+    $loading.remove();
+
+    if (validOptions && validOptions.length > 0) {
+      renderOptions(validOptions);
+      enableOptions();
+    } else {
+      await botMessage("It looks like we don't have any products matching that exact combination right now. Let's start over!", 500);
+      renderRestartButton();
+    }
   }
 
   /**

@@ -69,6 +69,34 @@ class FlowSell_Commerce_Engine {
 	}
 
 	/**
+	 * Check if any products exist for the given filters.
+	 * Highly optimized: only queries for 1 ID.
+	 *
+	 * @param array $filters
+	 * @return bool
+	 */
+	public function has_products( array $filters ): bool {
+		$args = $this->build_query_args( $filters, 1 );
+		$args['return'] = 'ids';
+
+		// Generate a unique cache key based on query args
+		$cache_key = 'fs_has_prod_' . md5( wp_json_encode( $args ) );
+		$cached    = get_transient( $cache_key );
+
+		if ( false !== $cached ) {
+			return (bool) $cached;
+		}
+
+		$query    = new WC_Product_Query( $args );
+		$products = $query->get_products();
+		$has      = count( $products ) > 0;
+
+		set_transient( $cache_key, $has, HOUR_IN_SECONDS );
+
+		return $has;
+	}
+
+	/**
 	 * Translate price-range strings from flow answers into numeric filters.
 	 * Supports common patterns: "<20k", "20k-50k", "50k+", "<5000", "5000-10000".
 	 *
