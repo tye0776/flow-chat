@@ -1,0 +1,49 @@
+{
+  "flow_name": "pidgin_cake_flow",
+  "steps": [
+    {
+      "id": "welcome",
+      "question": "👋 How far! I wan help you select the best cake. Wetin you dey celebrate?",
+      "options": ["🎂 Birthday", "💍 Wedding", "🏢 Office P", "🎉 Just to chop"],
+      "product_filters": {
+        "🎂 Birthday": { "category": "birthday-cakes", "in_stock": true },
+        "💍 Wedding":  { "category": "wedding-cakes",  "in_stock": true },
+        "🏢 Office P": { "category": "custom-cakes", "in_stock": true },
+        "🎉 Just to chop": { "in_stock": true }
+      },
+      "next": {
+        "🎂 Birthday":      "size",
+        "💍 Wedding":       "size",
+        "🏢 Office P":      "size",
+        "🎉 Just to chop":  "size"
+      }
+    },
+    {
+      "id": "size",
+      "question": "How many heads we dey serve? 😄",
+      "options": ["1–10 people", "10–30 people", "30–60 people", "60+ people"],
+      "next": {
+        "1–10 people":  "flavour",
+        "10–30 people": "flavour",
+        "30–60 people": "flavour",
+        "60+ people":   "flavour"
+      }
+    },
+    {
+      "id": "flavour",
+      "question": "Which flavour you dey feel like today? 🍰",
+      "options": ["Vanilla", "Chocolate", "Red Velvet", "Fruit Cake"],
+      "next": {
+        "Vanilla":     "budget",
+        "Chocolate":   "budget",
+        "Red Velvet":  "budget",
+        "Fruit Cake":  "budget"
+      }
+    },
+    {
+      "id": "budget",
+      "question": "How much you hold? 💰",
+      "type": "dynamic_pricing"
+    }
+  ]
+}

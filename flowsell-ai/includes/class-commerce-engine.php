@@ -97,6 +97,47 @@ class FlowSell_Commerce_Engine {
 	}
 
 	/**
+	 * Get the min and max prices of products matching the current filters.
+	 *
+	 * @param array $filters
+	 * @return array|null [ 'min' => float, 'max' => float ]
+	 */
+	public function get_price_range( array $filters ): ?array {
+		$args = $this->build_query_args( $filters, -1 );
+		$args['return'] = 'ids';
+
+		$query = new WC_Product_Query( $args );
+		$ids   = $query->get_products();
+
+		if ( empty( $ids ) ) {
+			return null;
+		}
+
+		$min = null;
+		$max = null;
+
+		foreach ( $ids as $id ) {
+			$product = wc_get_product( $id );
+			if ( ! $product ) {
+				continue;
+			}
+
+			$price = (float) $product->get_price();
+			if ( $min === null || $price < $min ) {
+				$min = $price;
+			}
+			if ( $max === null || $price > $max ) {
+				$max = $price;
+			}
+		}
+
+		return [
+			'min' => $min,
+			'max' => $max,
+		];
+	}
+
+	/**
 	 * Translate price-range strings from flow answers into numeric filters.
 	 * Supports common patterns: "<20k", "20k-50k", "50k+", "<5000", "5000-10000".
 	 *

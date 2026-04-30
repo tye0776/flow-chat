@@ -259,6 +259,10 @@ class FlowSell_Admin {
 					<a href="<?php echo esc_url( $reset_url ); ?>" class="button" onclick="return confirm('<?php esc_attr_e( 'Reset to default flow?', 'flowsell-ai' ); ?>')">
 						<?php esc_html_e( 'Reset to Default', 'flowsell-ai' ); ?>
 					</a>
+					<?php $pidgin_url = wp_nonce_url( admin_url( 'admin.php?page=flowsell-flow-editor&load_pidgin=1' ), 'flowsell_load_pidgin' ); ?>
+					<a href="<?php echo esc_url( $pidgin_url ); ?>" class="button" onclick="return confirm('<?php esc_attr_e( 'Overwrite current flow with Pidgin template?', 'flowsell-ai' ); ?>')">
+						<?php esc_html_e( 'Load Pidgin Template', 'flowsell-ai' ); ?>
+					</a>
 				</p>
 			</form>
 
@@ -352,6 +356,17 @@ class FlowSell_Admin {
 			wp_safe_redirect( admin_url( 'admin.php?page=flowsell-flow-editor&updated=1' ) );
 			exit;
 		}
+
+		// Handle Pidgin load
+		if ( isset( $_GET['page'], $_GET['load_pidgin'] ) && $_GET['page'] === 'flowsell-flow-editor' && current_user_can( 'manage_options' ) ) {
+			check_admin_referer( 'flowsell_load_pidgin' );
+			$pidgin_path = FLOWSELL_DATA_DIR . 'pidgin-flow.json';
+			if ( file_exists( $pidgin_path ) ) {
+				update_option( 'flowsell_active_flow', file_get_contents( $pidgin_path ), false ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			}
+			wp_safe_redirect( admin_url( 'admin.php?page=flowsell-flow-editor&updated=1' ) );
+			exit;
+		}
 	}
 
 	/**
@@ -387,6 +402,15 @@ class FlowSell_Admin {
 			wp_die( esc_html__( 'Permission denied.', 'flowsell-ai' ) );
 		}
 
+		// Sanitize and auto-correct WhatsApp number
+		$whatsapp = sanitize_text_field( $_POST['flowsell_whatsapp'] ?? '' );
+		$whatsapp = preg_replace( '/[^0-9+]/', '', $whatsapp ); // Strip non-digits except +
+		if ( strpos( $whatsapp, '0' ) === 0 && strlen( $whatsapp ) === 11 ) {
+			$whatsapp = '+234' . substr( $whatsapp, 1 ); // Convert 080... to +23480...
+		} elseif ( strpos( $whatsapp, '234' ) === 0 ) {
+			$whatsapp = '+' . $whatsapp; // Convert 234... to +234...
+		}
+
 		$settings = [
 			'enabled'       => ! empty( $_POST['flowsell_enabled'] ),
 			'widget_label'  => sanitize_text_field( $_POST['flowsell_widget_label'] ?? 'Find Your Perfect Product' ),
@@ -394,7 +418,7 @@ class FlowSell_Admin {
 			'position'      => in_array( $_POST['flowsell_position'] ?? '', [ 'bottom-right', 'bottom-left' ], true )
 				? $_POST['flowsell_position']
 				: 'bottom-right',
-			'whatsapp'      => sanitize_text_field( $_POST['flowsell_whatsapp'] ?? '' ),
+			'whatsapp'      => $whatsapp,
 			'lead_fields'   => sanitize_text_field( $_POST['flowsell_lead_fields'] ?? '' ),
 		];
 

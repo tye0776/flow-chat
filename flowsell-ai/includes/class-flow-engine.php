@@ -124,7 +124,16 @@ class FlowSell_Flow_Engine {
 	 */
 	public function get_valid_options( string $step_id, array $answers ): array {
 		$step = $this->get_step( $step_id );
-		if ( ! $step || empty( $step['options'] ) ) {
+		if ( ! $step ) {
+			return [];
+		}
+
+		// Handle dynamic steps
+		if ( isset( $step['type'] ) && strpos( $step['type'], 'dynamic_' ) === 0 ) {
+			return $this->generate_dynamic_options( $step, $answers );
+		}
+
+		if ( empty( $step['options'] ) ) {
 			return [];
 		}
 
@@ -152,6 +161,67 @@ class FlowSell_Flow_Engine {
 	}
 
 	/**
+	 * Generate options dynamically for special step types.
+	 *
+	 * @param array $step
+	 * @param array $answers
+	 * @return array
+	 */
+	private function generate_dynamic_options( array $step, array $answers ): array {
+		$options = [];
+
+		if ( $step['type'] === 'dynamic_delivery' ) {
+			if ( class_exists( 'WC_Shipping_Zones' ) ) {
+				$zones = \WC_Shipping_Zones::get_zones();
+				foreach ( $zones as $zone ) {
+					$options[] = $zone['zone_name'];
+				}
+				// Always add Rest of the World fallback if no zones exist
+				if ( empty( $options ) ) {
+					$options = [ 'Lagos - Island', 'Lagos - Mainland', 'Outside Lagos' ];
+				} else {
+					$options[] = 'Everywhere Else';
+				}
+			}
+		} elseif ( $step['type'] === 'dynamic_pricing' ) {
+			$commerce     = new FlowSell_Commerce_Engine();
+			$base_filters = $this->build_filters_from_answers( $answers );
+			
+			// Get min/max prices of matching products
+			$prices = $commerce->get_price_range( $base_filters );
+			if ( ! $prices || $prices['min'] === null ) {
+				return []; // No products match, handled gracefully by frontend
+			}
+
+			$min = ceil( $prices['min'] );
+			$max = ceil( $prices['max'] );
+
+			// Mathematical bucketing strategy
+			if ( $min == $max ) {
+				$options[] = 'Exactly ₦' . number_format( $min );
+			} else {
+				$diff = $max - $min;
+				if ( $diff <= 5000 ) {
+					// Very tight range
+					$options[] = 'Under ₦' . number_format( $min + ( $diff / 2 ) );
+					$options[] = 'Above ₦' . number_format( $min + ( $diff / 2 ) );
+				} else {
+					// Split into 3 buckets
+					$step_size = ceil( $diff / 3 / 1000 ) * 1000; // Round to nearest 1000
+					$b1_max = $min + $step_size;
+					$b2_max = $min + ( $step_size * 2 );
+
+					$options[] = 'Under ₦' . number_format( $b1_max );
+					$options[] = '₦' . number_format( $b1_max ) . ' – ₦' . number_format( $b2_max );
+					$options[] = '₦' . number_format( $b2_max ) . '+';
+				}
+			}
+		}
+
+		return $options;
+	}
+
+	/**
 	 * Extract product filter hints from a step's answers.
 	 * Looks for optional 'product_filters' key in step definition.
 	 *
@@ -162,9 +232,27 @@ class FlowSell_Flow_Engine {
 	public function extract_product_filters( array $step, string $answer ): array {
 		$filters = [];
 
+		if ( isset( $step['type'] ) && $step['type'] === 'dynamic_pricing' ) {
+			// Parse mathematical buckets like "Under ₦20,000" or "₦20,000 – ₦40,000" or "₦40,000+"
+			$clean = preg_replace( '/[^0-9–]/', '', $answer ); // Keep numbers and en-dash
+			if ( strpos( $answer, 'Exactly' ) !== false ) {
+				$val = preg_replace( '/[^0-9]/', '', $answer );
+				$filters['price_range'] = $val . '-' . $val;
+			} elseif ( strpos( $answer, 'Under' ) !== false ) {
+				$val = preg_replace( '/[^0-9]/', '', $answer );
+				$filters['price_range'] = '<' . $val;
+			} elseif ( strpos( $answer, '+' ) !== false || strpos( $answer, 'Above' ) !== false ) {
+				$val = preg_replace( '/[^0-9]/', '', $answer );
+				$filters['price_range'] = $val . '+';
+			} elseif ( strpos( $clean, '–' ) !== false ) {
+				$parts = explode( '–', $clean );
+				$filters['price_range'] = $parts[0] . '-' . $parts[1];
+			}
+		}
+
 		// Static filter map defined per option
 		if ( isset( $step['product_filters'][ $answer ] ) ) {
-			$filters = (array) $step['product_filters'][ $answer ];
+			$filters = array_merge( $filters, (array) $step['product_filters'][ $answer ] );
 		}
 
 		// Global filters on step (apply regardless of answer)
