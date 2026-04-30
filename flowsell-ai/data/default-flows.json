@@ -1,0 +1,55 @@
+{
+  "flow_name": "cake_order_flow",
+  "steps": [
+    {
+      "id": "welcome",
+      "question": "👋 Welcome! I'll help you find the perfect cake. What are you celebrating?",
+      "options": ["🎂 Birthday", "💍 Wedding", "🏢 Corporate Event", "🎉 Just a Treat"],
+      "product_filters": {
+        "🎂 Birthday": { "category": "birthday-cakes", "in_stock": true },
+        "💍 Wedding":  { "category": "wedding-cakes",  "in_stock": true },
+        "🏢 Corporate Event": { "category": "custom-cakes", "in_stock": true },
+        "🎉 Just a Treat": { "in_stock": true }
+      },
+      "next": {
+        "🎂 Birthday":      "size",
+        "💍 Wedding":       "size",
+        "🏢 Corporate Event": "size",
+        "🎉 Just a Treat":  "size"
+      }
+    },
+    {
+      "id": "size",
+      "question": "How many people are you serving?",
+      "options": ["1–10 people", "10–30 people", "30–60 people", "60+ people"],
+      "next": {
+        "1–10 people":  "flavour",
+        "10–30 people": "flavour",
+        "30–60 people": "flavour",
+        "60+ people":   "flavour"
+      }
+    },
+    {
+      "id": "flavour",
+      "question": "What flavour are you feeling? 🍰",
+      "options": ["Vanilla", "Chocolate", "Red Velvet", "Fruit Cake"],
+      "next": {
+        "Vanilla":     "budget",
+        "Chocolate":   "budget",
+        "Red Velvet":  "budget",
+        "Fruit Cake":  "budget"
+      }
+    },
+    {
+      "id": "budget",
+      "question": "What is your budget range? 💰",
+      "options": ["Under ₦20,000", "₦20,000–₦50,000", "₦50,000–₦100,000", "₦100,000+"],
+      "product_filters": {
+        "Under ₦20,000":          { "price_range": "<20000" },
+        "₦20,000–₦50,000":       { "price_range": "20000-50000" },
+        "₦50,000–₦100,000":      { "price_range": "50000-100000" },
+        "₦100,000+":              { "price_range": "100000+" }
+      }
+    }
+  ]
+}

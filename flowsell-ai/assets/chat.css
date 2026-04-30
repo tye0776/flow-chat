@@ -1,0 +1,516 @@
+/* ============================================================
+   FlowSell AI — Chat Widget Styles
+   WhatsApp-inspired, mobile-first, smooth transitions
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── CSS Variables ─────────────────────────────────────────── */
+:root {
+  --fs-primary:        #25d366;
+  --fs-primary-dark:   #128c7e;
+  --fs-primary-light:  #dcf8c6;
+  --fs-bg:             #ece5dd;
+  --fs-white:          #ffffff;
+  --fs-gray-100:       #f0f0f0;
+  --fs-gray-200:       #e9e9e9;
+  --fs-gray-400:       #a0a0a0;
+  --fs-gray-700:       #555555;
+  --fs-text:           #1a1a1a;
+  --fs-bubble-bot:     #ffffff;
+  --fs-bubble-user:    #dcf8c6;
+  --fs-shadow-sm:      0 2px 8px rgba(0,0,0,.12);
+  --fs-shadow-md:      0 8px 32px rgba(0,0,0,.18);
+  --fs-shadow-lg:      0 16px 48px rgba(0,0,0,.22);
+  --fs-radius:         18px;
+  --fs-radius-sm:      10px;
+  --fs-font:           'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --fs-transition:     all .25s cubic-bezier(.4,0,.2,1);
+  --fs-z:              999999;
+}
+
+/* ── Widget Container ──────────────────────────────────────── */
+.flowsell-widget {
+  position: fixed;
+  z-index: var(--fs-z);
+  font-family: var(--fs-font);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.flowsell-bottom-right { right: 24px; bottom: 24px; }
+.flowsell-bottom-left  { left:  24px; bottom: 24px; }
+
+/* ── Launcher Button ───────────────────────────────────────── */
+.flowsell-launcher {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--fs-primary);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  padding: 14px 20px;
+  cursor: pointer;
+  box-shadow: var(--fs-shadow-md);
+  font-family: var(--fs-font);
+  font-size: 14px;
+  font-weight: 600;
+  transition: var(--fs-transition);
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.flowsell-launcher:hover {
+  background: var(--fs-primary-dark);
+  box-shadow: var(--fs-shadow-lg);
+  transform: translateY(-2px);
+}
+
+.flowsell-launcher:active {
+  transform: translateY(0);
+}
+
+.flowsell-launcher-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flowsell-launcher-icon svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ── Chat Window ───────────────────────────────────────────── */
+.flowsell-chat-window {
+  width: 370px;
+  max-width: calc(100vw - 32px);
+  height: 560px;
+  max-height: calc(100dvh - 100px);
+  display: flex;
+  flex-direction: column;
+  background: var(--fs-bg);
+  border-radius: var(--fs-radius);
+  box-shadow: var(--fs-shadow-lg);
+  overflow: hidden;
+  animation: flowsell-slideIn .3s cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes flowsell-slideIn {
+  from { opacity: 0; transform: translateY(24px) scale(.95); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* ── Header ────────────────────────────────────────────────── */
+.flowsell-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--fs-primary-dark);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.flowsell-header-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.flowsell-header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.flowsell-header-name {
+  display: block;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.flowsell-header-status {
+  display: block;
+  font-size: 11px;
+  opacity: .8;
+  margin-top: 2px;
+}
+
+.flowsell-close-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 18px;
+  line-height: 1;
+  transition: color .2s;
+  border-radius: 50%;
+}
+
+.flowsell-close-btn:hover { color: #fff; }
+
+/* ── Message Area ──────────────────────────────────────────── */
+.flowsell-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  scroll-behavior: smooth;
+}
+
+.flowsell-messages::-webkit-scrollbar { width: 4px; }
+.flowsell-messages::-webkit-scrollbar-track { background: transparent; }
+.flowsell-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 2px; }
+
+/* ── Bubbles ───────────────────────────────────────────────── */
+.flowsell-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: var(--fs-radius);
+  font-size: 14px;
+  line-height: 1.5;
+  position: relative;
+  word-break: break-word;
+  animation: flowsell-bubbleIn .22s ease-out;
+}
+
+@keyframes flowsell-bubbleIn {
+  from { opacity: 0; transform: scale(.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.flowsell-bubble-bot {
+  background: var(--fs-bubble-bot);
+  color: var(--fs-text);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  box-shadow: var(--fs-shadow-sm);
+}
+
+.flowsell-bubble-user {
+  background: var(--fs-bubble-user);
+  color: var(--fs-text);
+  border-bottom-right-radius: 4px;
+  align-self: flex-end;
+  box-shadow: var(--fs-shadow-sm);
+}
+
+.flowsell-bubble-time {
+  font-size: 10px;
+  color: var(--fs-gray-400);
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* ── Typing Indicator ──────────────────────────────────────── */
+.flowsell-typing {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 12px 14px;
+  background: var(--fs-bubble-bot);
+  border-radius: var(--fs-radius);
+  border-bottom-left-radius: 4px;
+  align-self: flex-start;
+  box-shadow: var(--fs-shadow-sm);
+  animation: flowsell-bubbleIn .22s ease-out;
+}
+
+.flowsell-typing span {
+  width: 8px;
+  height: 8px;
+  background: var(--fs-gray-400);
+  border-radius: 50%;
+  animation: flowsell-typing-dot 1.2s infinite;
+}
+
+.flowsell-typing span:nth-child(2) { animation-delay: .2s; }
+.flowsell-typing span:nth-child(3) { animation-delay: .4s; }
+
+@keyframes flowsell-typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30%            { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ── Options / Buttons ─────────────────────────────────────── */
+.flowsell-options {
+  padding: 8px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--fs-bg);
+}
+
+.flowsell-option-btn {
+  width: 100%;
+  padding: 11px 16px;
+  background: var(--fs-white);
+  border: 1.5px solid var(--fs-primary);
+  border-radius: 50px;
+  color: var(--fs-primary-dark);
+  font-family: var(--fs-font);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--fs-transition);
+  text-align: left;
+}
+
+.flowsell-option-btn:hover {
+  background: var(--fs-primary);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37,211,102,.3);
+}
+
+.flowsell-option-btn:active {
+  transform: translateY(0);
+}
+
+.flowsell-option-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Product Cards ─────────────────────────────────────────── */
+.flowsell-products {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 12px 14px;
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+  background: var(--fs-bg);
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.flowsell-products::-webkit-scrollbar { height: 3px; }
+.flowsell-products::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 2px; }
+
+.flowsell-product-card {
+  flex: 0 0 160px;
+  background: var(--fs-white);
+  border-radius: var(--fs-radius-sm);
+  box-shadow: var(--fs-shadow-sm);
+  overflow: hidden;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.flowsell-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
+
+.flowsell-product-img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+  display: block;
+}
+
+.flowsell-product-body {
+  padding: 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.flowsell-product-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fs-text);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.flowsell-product-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fs-primary-dark);
+}
+
+.flowsell-product-rating {
+  font-size: 11px;
+  color: var(--fs-gray-400);
+}
+
+.flowsell-product-desc {
+  font-size: 11px;
+  color: var(--fs-gray-700);
+  line-height: 1.4;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.flowsell-product-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0 10px 10px;
+}
+
+.flowsell-atc-btn {
+  display: block;
+  text-align: center;
+  padding: 8px 10px;
+  background: var(--fs-primary);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  font-family: var(--fs-font);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background .2s;
+}
+
+.flowsell-atc-btn:hover { background: var(--fs-primary-dark); color: #fff; }
+.flowsell-atc-btn:focus { outline: 2px solid var(--fs-primary); outline-offset: 2px; }
+
+.flowsell-view-btn {
+  display: block;
+  text-align: center;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid var(--fs-gray-200);
+  color: var(--fs-gray-700);
+  border-radius: 50px;
+  font-family: var(--fs-font);
+  font-size: 11px;
+  text-decoration: none;
+  transition: border-color .2s, color .2s;
+}
+
+.flowsell-view-btn:hover { border-color: var(--fs-primary); color: var(--fs-primary-dark); }
+
+.flowsell-out-of-stock {
+  text-align: center;
+  padding: 6px;
+  font-size: 11px;
+  color: #e74c3c;
+  font-weight: 500;
+}
+
+/* ── No Products State ─────────────────────────────────────── */
+.flowsell-no-products {
+  padding: 16px;
+  text-align: center;
+  color: var(--fs-gray-700);
+  font-size: 13px;
+  background: var(--fs-white);
+  border-radius: var(--fs-radius-sm);
+  margin: 0 12px 12px;
+}
+
+/* ── Restart Button ────────────────────────────────────────── */
+.flowsell-restart-btn {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+  padding: 10px;
+  background: transparent;
+  border: 1.5px solid var(--fs-gray-200);
+  border-radius: 50px;
+  font-family: var(--fs-font);
+  font-size: 12px;
+  color: var(--fs-gray-700);
+  cursor: pointer;
+  text-align: center;
+  transition: var(--fs-transition);
+}
+
+.flowsell-restart-btn:hover {
+  border-color: var(--fs-primary);
+  color: var(--fs-primary-dark);
+}
+
+/* ── Footer ────────────────────────────────────────────────── */
+.flowsell-chat-footer {
+  padding: 8px 16px;
+  text-align: center;
+  background: var(--fs-white);
+  border-top: 1px solid var(--fs-gray-200);
+  flex-shrink: 0;
+}
+
+.flowsell-powered-by {
+  font-size: 10px;
+  color: var(--fs-gray-400);
+  letter-spacing: .02em;
+}
+
+/* ── Badge (notification dot) ──────────────────────────────── */
+.flowsell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #f44336;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  animation: flowsell-pulse 1.5s infinite;
+}
+
+@keyframes flowsell-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.15); }
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .flowsell-bottom-right { right: 12px; bottom: 12px; }
+  .flowsell-bottom-left  { left:  12px; bottom: 12px; }
+
+  .flowsell-chat-window {
+    width: calc(100vw - 24px);
+    height: calc(100dvh - 80px);
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  .flowsell-launcher-label {
+    display: none;
+  }
+
+  .flowsell-launcher {
+    padding: 14px;
+    border-radius: 50%;
+  }
+}
+
+/* ── Accessibility ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
